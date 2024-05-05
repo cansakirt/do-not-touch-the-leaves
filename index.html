@@ -10,25 +10,109 @@
       #webcam {
         transform: scaleX(-1); /* Flip the video horizontally */
       }
+      .control-panel {
+        width: 250px;
+        height: auto;
+        position: fixed;
+        top: 10px;
+        left: 10px;
+        background-color: rgba(255, 255, 255, 0.8);
+        padding: 10px;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        z-index: 1000;
+      }
+      .control-panel-header {
+        padding: 4px 10px;
+        background-color: #f1f1f1;
+        color: #333;
+        cursor: move; /* Indicate that it's movable */
+        border-top-left-radius: 8px;
+        border-top-right-radius: 8px;
+      }
     </style>
+    <script>
+      function makeDraggable(dragHandle, draggableElement) {
+        var pos1 = 0,
+          pos2 = 0,
+          pos3 = 0,
+          pos4 = 0;
+        dragHandle.onmousedown = dragMouseDown;
 
-    <h1>Hands Landmarker</h1>
+        function dragMouseDown(e) {
+          e = e || window.event;
+          e.preventDefault();
+          // get the mouse cursor position at startup:
+          pos3 = e.clientX;
+          pos4 = e.clientY;
+          document.onmouseup = closeDragElement;
+          // call a function whenever the cursor moves:
+          document.onmousemove = elementDrag;
+        }
 
-    <div class="controls">
+        function elementDrag(e) {
+          e = e || window.event;
+          e.preventDefault();
+          // calculate the new cursor position:
+          pos1 = pos3 - e.clientX;
+          pos2 = pos4 - e.clientY;
+          pos3 = e.clientX;
+          pos4 = e.clientY;
+
+          // Calculate new position:
+          let newTop = draggableElement.offsetTop - pos2;
+          let newLeft = draggableElement.offsetLeft - pos1;
+
+          // Constrain the movement within the boundaries of the window
+          newTop = Math.max(10, Math.min(newTop, window.innerHeight - draggableElement.offsetHeight - 10));
+          newLeft = Math.max(10, Math.min(newLeft, window.innerWidth - draggableElement.offsetWidth - 10));
+
+          // Set the element's new position:
+          draggableElement.style.top = newTop + "px";
+          draggableElement.style.left = newLeft + "px";
+        }
+
+        function closeDragElement() {
+          // stop moving when mouse button is released:
+          document.onmouseup = null;
+          document.onmousemove = null;
+        }
+      }
+
+      window.onload = function () {
+        const controlPanel = document.getElementById("controlPanel");
+        const header = document.getElementById("controlPanelHeader");
+        makeDraggable(header, controlPanel);
+      };
+    </script>
+
+    <div id="controlPanel" class="control-panel">
+      <div id="controlPanelHeader" class="control-panel-header">Drag here</div>
+      <div class="controls">
+        Leaf Count: <input type="range" id="leafCountSlider" min="0" max="100" value="100" /> <span id="leafCountValue">100</span><br />
+        Size: <input type="range" id="sizeSlider" min="20" max="200" value="30" /> <span id="sizeValue">30</span><br />
+        Speed: <input type="range" id="speedSlider" min="0" max="8" value="0" /> <span id="speedValue">0</span><br />
+        <input type="range" id="influenceRadiusSlider" min="3" max="300" value="60" />
+        <label for="influenceRadiusSlider">Influence Radius</label><br />
+        <input type="checkbox" id="drawInfluenceCheckbox" checked />
+        <label for="drawInfluenceCheckbox">Draw Influence Radius</label><br />
+        <button id="gridButton">Create Grid</button>
+        <p id="message"></p>
+        <button id="webcamButton">ENABLE WEBCAM</button>
+      </div>
+    </div>
+
+    <!-- <div class="controls">
       Leaf Count: <input type="range" id="leafCountSlider" min="0" max="100" value="100" /> <span id="leafCountValue">100</span><br />
       Size: <input type="range" id="sizeSlider" min="20" max="200" value="30" /> <span id="sizeValue">30</span><br />
       Speed: <input type="range" id="speedSlider" min="0" max="8" value="0" /> <span id="speedValue">0</span><br />
       <input type="range" id="influenceRadiusSlider" min="3" max="300" value="60" />
       <label for="influenceRadiusSlider">Influence Radius</label><br />
-
-      <!-- <span id="mouseDistance">0</span><br /> -->
       <input type="checkbox" id="drawInfluenceCheckbox" checked />
       <label for="drawInfluenceCheckbox">Draw Influence Radius</label><br />
       <button id="gridButton">Create Grid</button>
-    </div>
-    <p id="message"></p>
+    </div> -->
 
-    <button id="webcamButton">ENABLE WEBCAM</button>
     <div style="position: relative">
       <video id="webcam" style="position: absolute; left: 0px; top: 0px; width: 100%; height: auto" autoplay playsinline></video>
       <div id="canvas" style="position: absolute; left: 0px; top: 0px"></div>

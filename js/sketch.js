@@ -44,19 +44,29 @@ function setup() {
   select("#gridButton").mousePressed(createGrid);
 
   // Event listeners for window focus
-  window.addEventListener("focus", function () {
+  // window.addEventListener("focus", function () {
+  //   isPaused = false;
+  //   loop(); // Resume animation loop
+  // });
+
+  // window.addEventListener("blur", function () {
+  //   isPaused = true;
+  //   noLoop(); // Pause animation loop
+  // });
+
+  window.addEventListener("focus", () => {
     isPaused = false;
-    loop(); // Resume animation loop
+    requestAnimationFrame(draw); // Restart drawing when focused
   });
 
-  window.addEventListener("blur", function () {
-    isPaused = true;
-    noLoop(); // Pause animation loop
+  window.addEventListener("blur", () => {
+    isPaused = true; // Pause drawing when not focused
   });
 }
 
 function draw() {
   if (isPaused) return; // Don't execute draw loop if paused
+  // requestAnimationFrame(draw); // Optimize animation loop
   clear();
 
   // Pre-calculate constant values
@@ -122,17 +132,17 @@ function draw() {
     applyMouseForce(leaf);
   }
 
-  if (hand_results) {
-    if (hand_results.landmarks) {
-      for (const landmarks of hand_results.landmarks) {
-        for (let landmark of landmarks) {
-          noStroke();
-          fill(100, 150, 210);
-          circle((1 - landmark.x) * width, landmark.y * height, 10);
-        }
-      }
-    }
-  }
+  // if (hand_results) {
+  //   if (hand_results.landmarks) {
+  //     for (const landmarks of hand_results.landmarks) {
+  //       for (let landmark of landmarks) {
+  //         noStroke();
+  //         fill(100, 150, 210);
+  //         circle((1 - landmark.x) * width, landmark.y * height, 10);
+  //       }
+  //     }
+  //   }
+  // }
 }
 
 function windowResized() {
@@ -202,19 +212,41 @@ function updateInfluenceRadius() {
   influenceRadius = select("#influenceRadiusSlider").value();
 }
 
-function updateLeafCount() {
-  let newCount = select("#leafCountSlider").value();
-  let currentCount = leaves.length;
+// function updateLeafCount() {
+//   let newCount = select("#leafCountSlider").value();
+//   let currentCount = leaves.length;
 
+//   if (newCount > currentCount) {
+//     for (let i = currentCount; i < newCount; i++) {
+//       leaves.push(new Leaf(leafSize, leafSpeed));
+//     }
+//   } else if (newCount < currentCount) {
+//     leaves.splice(newCount, currentCount - newCount);
+//   }
+//   // Update leaf count value display
+//   select("#leafCountValue").html(newCount);
+// }
+
+function updateLeafCount(newCount) {
+  if (typeof newCount === "object") {
+    console.log("newCount :>> ", newCount.target.value);
+    newCount = newCount.target.value;
+  }
+  let currentCount = leaves.length;
   if (newCount > currentCount) {
+    // Increase the number of leaves
     for (let i = currentCount; i < newCount; i++) {
       leaves.push(new Leaf(leafSize, leafSpeed));
     }
   } else if (newCount < currentCount) {
-    leaves.splice(newCount, currentCount - newCount);
+    // Decrease the number of leaves
+    leaves.splice(0, currentCount - newCount);
   }
-  // Update leaf count value display
-  select("#leafCountValue").html(newCount);
+  // Update leaf count value display if element exists
+  let leafCountElement = select("#leafCountValue");
+  if (leafCountElement) {
+    leafCountElement.html(newCount);
+  }
 }
 
 function updateLeafSize() {
@@ -296,6 +328,15 @@ function applyHandForce(leaf, landmarkPos) {
 }
 
 function createGrid() {
+  // Store current number of leaves
+  let currentLeafCount = leaves.length;
+
+  // Clear leaves array temporarily by setting the count to zero
+  updateLeafCount(0);
+
+  // Re-create leaves based on the stored current count
+  updateLeafCount(currentLeafCount);
+
   // Calculate the number of rows and columns based on the square root of the total number of leaves
   let gridSize = floor(sqrt(leaves.length));
 

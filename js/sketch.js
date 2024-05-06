@@ -11,7 +11,7 @@ let score;
 const settings = {
   leafCount: 100,
   leafSize: 80,
-  leafSpeed: 0,
+  leafSpeed: 1,
   influenceRadius: 300,
   isPaused: false,
   drawInfluence: true,

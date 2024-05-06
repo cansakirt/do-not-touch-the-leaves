@@ -1,170 +1,32 @@
+// 1. Global variables and settings
 let leaves = [];
-let leafCount;
-let leafSize;
-let leafSpeed;
 let mousePos;
-let landmarkPos;
-let influenceRadius = 50; // Increased influence radius
-let isPaused = false; // Flag to track if animation is paused
-let drawInfluence = true; // Flag to track whether to draw influence radius
-
 let hand_results;
+let gesture_results;
 let p5canvas;
+let landmarkPos;
+let categoryName;
+let score;
 
-function setup() {
-  p5canvas = createCanvas(windowWidth, windowHeight, WEBGL);
-  p5canvas.parent("#canvas");
+const settings = {
+  leafCount: 100,
+  leafSize: 80,
+  leafSpeed: 0,
+  influenceRadius: 300,
+  isPaused: false,
+  drawInfluence: true,
+};
 
-  frameRate(30);
-  mousePos = createVector(0, 0);
-
-  gotHands = function (results) {
-    hand_results = results;
-    adjustCanvas();
-  };
-
-  // Get initial values from sliders
-  leafCount = select("#leafCountSlider").value();
-  leafSize = select("#sizeSlider").value();
-  leafSpeed = select("#speedSlider").value();
-
-  // Create initial leaves
-  for (let i = 0; i < leafCount; i++) {
-    leaves.push(new Leaf(leafSize, leafSpeed));
-  }
-
-  // Event listeners for sliders
-  select("#leafCountSlider").input(updateLeafCount);
-  select("#sizeSlider").input(updateLeafSize);
-  select("#speedSlider").input(updateLeafSpeed);
-  select("#influenceRadiusSlider").input(updateInfluenceRadius); // Add listener for influence radius slider
-  select("#drawInfluenceCheckbox").changed(updateDrawInfluence);
-
-  // Button event listener
-  select("#gridButton").mousePressed(createGrid);
-
-  // Event listeners for window focus
-  // window.addEventListener("focus", function () {
-  //   isPaused = false;
-  //   loop(); // Resume animation loop
-  // });
-
-  // window.addEventListener("blur", function () {
-  //   isPaused = true;
-  //   noLoop(); // Pause animation loop
-  // });
-
-  window.addEventListener("focus", () => {
-    isPaused = false;
-    requestAnimationFrame(draw); // Restart drawing when focused
-  });
-
-  window.addEventListener("blur", () => {
-    isPaused = true; // Pause drawing when not focused
-  });
-}
-
-function draw() {
-  if (isPaused) return; // Don't execute draw loop if paused
-  // requestAnimationFrame(draw); // Optimize animation loop
-  clear();
-
-  // Pre-calculate constant values
-  const halfWidth = width / 2;
-  const halfHeight = height / 2;
-
-  directionalLight(255, 255, 255, 0.25, 0.5, -0.5);
-  ambientLight(180);
-
-  translate(-halfWidth, -halfHeight, 0);
-
-  // // Handle all landmarks for all detected hands
-  // if (hand_results && hand_results.landmarks) {
-  //   for (const landmarks of hand_results.landmarks) {
-  //     for (let landmark of landmarks) {
-  //       const posX = landmark.x * width;
-  //       const posY = landmark.y * height;
-  //       // const posZ = landmark.z * 30; // Adjust Z-scale based on your depth perception needs
-  //       const posZ = 1; // Adjust Z-scale based on your depth perception needs
-
-  //       // Update influence for each leaf based on the landmark
-  //       console.log("(posX, posY, posZ) :>> ", [posX, posY, posZ]);
-  //       let landmarkPos = createVector(posX, posY, posZ);
-  //       if (landmarkPos) {
-  //         for (const leaf of leaves) {
-  //           applyHandForce(leaf, landmarkPos);
-  //         }
-  //       }
-
-  //       // Optionally draw landmarks
-  //       noStroke();
-  //       fill(100, 150, 210);
-  //       circle(posX, posY, 10);
-  //     }
-  //   }
-  // }
-
-  if (hand_results && hand_results.landmarks[0]) {
-    const indexFinger = hand_results.landmarks[0][8];
-    const mouseX = (1 - indexFinger.x) * width; // flipped because webcam is flipped.
-    const mouseY = indexFinger.y * height;
-    const mouseZ = indexFinger.z * 30;
-
-    mousePos = createVector(mouseX, mouseY, mouseZ);
-
-    noStroke();
-    // fill(100, 150, 210);
-    fill(253, 74, 71);
-    circle(mouseX, mouseY, 10);
-
-    // Draw influence radius around mouse if enabled
-    if (drawInfluence) {
-      noFill();
-      stroke(255, 150);
-      ellipse(mouseX, mouseY, mouseZ * influenceRadius * 2);
-    }
-  }
-
-  // Update and display leaves
-  for (const leaf of leaves) {
-    leaf.update();
-    leaf.display();
-    applyMouseForce(leaf);
-  }
-
-  // if (hand_results) {
-  //   if (hand_results.landmarks) {
-  //     for (const landmarks of hand_results.landmarks) {
-  //       for (let landmark of landmarks) {
-  //         noStroke();
-  //         fill(100, 150, 210);
-  //         circle((1 - landmark.x) * width, landmark.y * height, 10);
-  //       }
-  //     }
-  //   }
-  // }
-}
-
-function windowResized() {
-  adjustCanvas();
-}
-
-function adjustCanvas() {
-  // Get an element by its ID
-  var element_webcam = document.getElementById("webcam");
-  resizeCanvas(element_webcam.clientWidth, element_webcam.clientHeight);
-  //console.log(element_webcam.clientWidth);
-}
-
+// 2. Leaf class
 class Leaf {
   constructor(size, speed) {
     this.x = random(width);
     this.y = random(height);
     this.z = random(-50, 50);
     this.size = size;
-    this.speed = createVector(random(-speed, speed), random(-speed, speed), random(-speed, speed));
-    this.rotationSpeed = createVector(random(-0.05, 0.05), random(-0.05, 0.05), random(-0.05, 0.05));
-    this.rotation = createVector(random(TWO_PI), random(TWO_PI), random(TWO_PI));
+    this.speed = p5.Vector.random3D().mult(speed);
+    this.rotationSpeed = p5.Vector.random3D().mult(0.05);
+    this.rotation = p5.Vector.random3D().mult(TWO_PI);
   }
 
   update() {
@@ -176,7 +38,7 @@ class Leaf {
     // Bounce off the edges
     if (this.x < 0 || this.x > width) this.speed.x *= -1;
     if (this.y < 0 || this.y > height) this.speed.y *= -1;
-    if (this.z < -500 || this.z > 500) this.speed.z *= -1;
+    if (this.z < -50 || this.z > 50) this.speed.z *= -1;
   }
 
   display() {
@@ -185,8 +47,7 @@ class Leaf {
     rotateX(this.rotation.x);
     rotateY(this.rotation.y);
     rotateZ(this.rotation.z);
-    // fill("#FFC0CB");
-    fill("#c0ffc0");
+    fill(76, 245, 80);
     stroke(50);
 
     // Drawing leaf shape with veins
@@ -208,125 +69,220 @@ class Leaf {
   }
 }
 
-function updateInfluenceRadius() {
-  influenceRadius = select("#influenceRadiusSlider").value();
+// 3. Setup and initialization functions
+function setup() {
+  p5canvas = createCanvas(windowWidth, windowHeight, WEBGL);
+  p5canvas.parent("#canvas");
+  frameRate(30);
+  mousePos = createVector(-300, -300);
+  initializeControls();
+  createLeaves();
+
+  gotHands = function (results, results_gesture) {
+    hand_results = results;
+    gesture_results = results_gesture;
+    adjustCanvas();
+  };
+
+  window.addEventListener("focus", resumeAnimation);
+  window.addEventListener("blur", pauseAnimation);
 }
 
-// function updateLeafCount() {
-//   let newCount = select("#leafCountSlider").value();
-//   let currentCount = leaves.length;
+function initializeControls() {
+  const controls = [
+    { id: "#leaf-count-slider", eventType: "input", action: updateLeafCount },
+    { id: "#size-slider", eventType: "input", action: updateLeafSize },
+    { id: "#speed-slider", eventType: "input", action: updateLeafSpeed },
+    { id: "#influence-radius-slider", eventType: "input", action: updateInfluenceRadius },
+    { id: "#draw-influence-checkbox", eventType: "change", action: updateDrawInfluence },
+    { id: "#grid-button", eventType: "click", action: createGrid },
+  ];
 
-//   if (newCount > currentCount) {
-//     for (let i = currentCount; i < newCount; i++) {
-//       leaves.push(new Leaf(leafSize, leafSpeed));
-//     }
-//   } else if (newCount < currentCount) {
-//     leaves.splice(newCount, currentCount - newCount);
-//   }
-//   // Update leaf count value display
-//   select("#leafCountValue").html(newCount);
-// }
-
-function updateLeafCount(newCount) {
-  if (typeof newCount === "object") {
-    console.log("newCount :>> ", newCount.target.value);
-    newCount = newCount.target.value;
-  }
-  let currentCount = leaves.length;
-  if (newCount > currentCount) {
-    // Increase the number of leaves
-    for (let i = currentCount; i < newCount; i++) {
-      leaves.push(new Leaf(leafSize, leafSpeed));
+  controls.forEach(({ id, eventType, action }) => {
+    let element = select(id);
+    if (element.elt) {
+      element.elt.addEventListener(eventType, (e) => action(e.target.value));
+    } else {
+      console.error("Failed to find element: " + id);
     }
-  } else if (newCount < currentCount) {
-    // Decrease the number of leaves
-    leaves.splice(0, currentCount - newCount);
-  }
-  // Update leaf count value display if element exists
-  let leafCountElement = select("#leafCountValue");
-  if (leafCountElement) {
-    leafCountElement.html(newCount);
-  }
+  });
+
+  select("#leaf-count-value").html(settings.leafCount);
+  select("#size-value").html(settings.leafSize);
+  select("#speed-value").html(settings.leafSpeed);
+  select("#influence-radius-value").html(settings.influenceRadius);
+  select("#leaf-count-slider").value(settings.leafCount);
+  select("#size-slider").value(settings.leafSize);
+  select("#speed-slider").value(settings.leafSpeed);
+  select("#influence-radius-slider").value(settings.influenceRadius);
 }
 
-function updateLeafSize() {
-  leafSize = select("#sizeSlider").value();
-  for (let leaf of leaves) {
-    leaf.size = leafSize;
-  }
-  // Update size value display
-  select("#sizeValue").html(leafSize);
+// 3. Leaf creation
+function createLeaves() {
+  leaves = Array.from({ length: settings.leafCount }, () => new Leaf(settings.leafSize, settings.leafSpeed));
 }
 
-function updateLeafSpeed() {
-  leafSpeed = select("#speedSlider").value();
-  for (let leaf of leaves) {
-    leaf.speed.setMag(leafSpeed); // Update speed while maintaining direction
-  }
-  // Update speed value display
-  select("#speedValue").html(leafSpeed);
-}
-
-function updateDrawInfluence() {
-  drawInfluence = this.checked();
-}
-
-function applyMouseForce(leaf) {
-  let distance = p5.Vector.dist(mousePos, createVector(leaf.x, leaf.y));
-  // document.getElementById("mouseDistance").innerHTML = "Distance: " + distance
-
-  if (distance < influenceRadius) {
-    // Increase rotation speed for dizziness
-    leaf.rotationSpeed.mult(10);
-
-    // Calculate repulsive force direction
-    let repulseForce = p5.Vector.sub(createVector(leaf.x, leaf.y), mousePos);
-    repulseForce.normalize();
-
-    // Apply force based on distance (closer = stronger force)
-    let strength = 1 - distance / influenceRadius; // Inverse relationship
-    repulseForce.mult(strength * 4);
-    leaf.speed.add(repulseForce);
+// 4. Update functions for settings and leaves
+function updateLeafCount(value) {
+  settings.leafCount = parseInt(value);
+  let difference = settings.leafCount - leaves.length;
+  if (difference > 0) {
+    leaves.push(...Array.from({ length: difference }, () => new Leaf(settings.leafSize, settings.leafSpeed)));
   } else {
-    // Reset rotation speed when outside influence zone
-    leaf.rotationSpeed = createVector(random(-0.05, 0.05), random(-0.05, 0.05), random(-0.05, 0.05));
+    leaves.length = settings.leafCount;
+  }
+  select("#leaf-count-value").html(settings.leafCount);
+}
+
+function updateLeafSize(value) {
+  settings.leafSize = parseInt(value);
+  leaves.forEach((leaf) => (leaf.size = settings.leafSize));
+  select("#size-value").html(settings.leafSize);
+}
+
+function updateLeafSpeed(value) {
+  settings.leafSpeed = parseFloat(value);
+  leaves.forEach((leaf) => leaf.speed.setMag(settings.leafSpeed));
+  select("#speed-value").html(settings.leafSpeed);
+}
+
+function updateInfluenceRadius(value) {
+  console.log("settings.influenceRadius :>> ", settings.influenceRadius);
+  settings.influenceRadius = parseInt(value);
+  select("#influence-radius-value").html(settings.influenceRadius);
+}
+
+function updateDrawInfluence(value) {
+  settings.drawInfluence = !!value;
+}
+
+// 5. Animation control
+function animate() {
+  draw();
+  requestAnimationFrame(animate);
+}
+
+function draw() {
+  if (settings.isPaused) return;
+
+  clear();
+  translate(-width / 2, -height / 2);
+  setupLights();
+
+  if (hand_results?.landmarks?.[0]) {
+    processIndexFinger(hand_results.landmarks[0][8]);
+    // drawCircle(mousePos.x, mousePos.y, 253, 74, 71);
+  }
+
+  if (gesture_results?.gestures?.[0]) {
+    handleGestures(gesture_results.gestures[0][0]);
+  }
+
+  // Update and display leaves
+  leaves.forEach((leaf) => {
+    leaf.update();
+    leaf.display();
+    applyPointForce(leaf);
+  });
+
+  if (settings.drawInfluence) {
+    drawInfluenceRadius();
   }
 }
 
-// function applyMouseForce(leaf) {
-//   const leafPos = createVector(leaf.x, leaf.y); // Store leaf position in a vector
-//   const distance = mousePos.dist(leafPos); // Use dist() method for distance calculation
+function setupLights() {
+  background("rgba(64, 224, 208, 0.3)");
+  directionalLight(20, 200, 20, 0.25, 0.5, -0.5);
+  ambientLight(92, 169, 4);
+}
 
-//   if (distance < influenceRadius) {
-//     leaf.rotationSpeed.mult(10);
+function applyPointForce(leaf) {
+  // Precompute the leaf position vector once to avoid creating it multiple times
+  const leafPos = createVector(leaf.x, leaf.y);
 
-//     // Optimized force calculation
-//     const repulseForce = p5.Vector.sub(leafPos, mousePos);
-//     repulseForce.normalize().mult((1 - distance / influenceRadius) * 4);
-//     leaf.speed.add(repulseForce);
-//   } else {
-//     leaf.rotationSpeed.set(random(-0.05, 0.05), random(-0.05, 0.05), random(-0.05, 0.05));
-//   }
-// }
+  // Calculate the distance once and use it throughout the function
+  const distance = p5.Vector.dist(mousePos, leafPos);
 
-function applyHandForce(leaf, landmarkPos) {
-  console.log("leaf, landmarkPos :>> ", leaf, landmarkPos);
-  const leafPos = createVector(leaf.x, leaf.y, leaf.z);
-  const distance = landmarkPos.dist(leafPos);
-  if (distance < influenceRadius) {
-    leaf.rotationSpeed.mult(10);
+  // Only process if the leaf is within the influence radius
+  if (distance < settings.influenceRadius) {
+    // Compute the repulsion force vector from the mouse position to the leaf
+    let repulseForce = p5.Vector.sub(leafPos, mousePos);
+    repulseForce.normalize(); // Normalize the vector to get direction only
 
-    // Calculate the repulsion force direction
-    const repulseForce = p5.Vector.sub(leafPos, landmarkPos)
-      .normalize()
-      .mult((1 - distance / influenceRadius) * 4);
+    // Calculate the strength of the force (inverse proportion to distance)
+    const strength = 1 - distance / settings.influenceRadius;
+
+    // Scale down the multiplier for a more gentle repulsion
+    repulseForce.mult(strength * 2); // Reduced from 4 to 2 for gentler effect
     leaf.speed.add(repulseForce);
+
+    // Gradually increase rotation speed as the mouse gets closer
+    const rotationStrength = 1 + 9 * strength; // Gradual increase from 1 to 10
+    leaf.rotationSpeed.mult(rotationStrength);
   } else {
     // Reset rotation speed when outside the influence zone
-    leaf.rotationSpeed.set(random(-0.05, 0.05), random(-0.05, 0.05), random(-0.05, 0.05));
+    leaf.rotationSpeed = createVector(random(-0.005, 0.005), random(-0.005, 0.005), random(-0.005, 0.005));
   }
 }
 
+// 6. Event handling
+
+function handleGestures(gesture) {
+  let currentGesture = categoryName;
+  categoryName = gesture.categoryName;
+  score = gesture.score;
+  if (score > 0.65 && currentGesture != categoryName) {
+    if (categoryName === "Thumb_Up") {
+      createGrid();
+    }
+    console.log(categoryName, score);
+  }
+}
+
+function processIndexFinger(indexFinger) {
+  let mouseX = (1 - indexFinger.x) * width;
+  let mouseY = indexFinger.y * height;
+  let mouseZ = (indexFinger.z + 2) * 20 + 100;
+
+  mousePos.set(mouseX, mouseY, mouseZ);
+}
+
+// 7. Utility and interaction
+
+function drawInfluenceRadius() {
+  noFill();
+  stroke(255, 150);
+  ellipse(mousePos.x, mousePos.y, settings.influenceRadius);
+}
+
+function drawCircle(x, y, r, g, b) {
+  noStroke();
+  fill(r, g, b);
+  circle(x, y, 10);
+}
+
+// 8. Event related functions
+
+function resumeAnimation() {
+  settings.isPaused = false;
+  loop();
+}
+
+function pauseAnimation() {
+  settings.isPaused = true;
+  noLoop();
+}
+
+function windowResized() {
+  adjustCanvas();
+}
+
+function adjustCanvas() {
+  var element_webcam = document.getElementById("webcam");
+  resizeCanvas(element_webcam.clientWidth, element_webcam.clientHeight);
+}
+
+// 9. Grid creation function
 function createGrid() {
   // Store current number of leaves
   let currentLeafCount = leaves.length;
@@ -367,3 +323,6 @@ function createGrid() {
     }
   }
 }
+
+// 9. Start the animation
+animate();

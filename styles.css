@@ -1,0 +1,135 @@
+#webcam {
+  transform: scaleX(-1);
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  width: 100%;
+  height: auto;
+}
+
+.control-panel {
+  width: 180px;
+  height: auto;
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  opacity: 0.2;
+  background-color: rgba(255, 255, 255, 0.3);
+  padding: 5px;
+  border-radius: 15px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  user-select: none;
+}
+.control-panel:hover {
+  opacity: 1;
+  background-color: rgba(255, 255, 255, 1);
+
+  transition: transform 0.5s ease;
+}
+
+.control-panel-header {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: rgba(4, 0, 113, 0.3);
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+  align-items: center;
+}
+
+.toggle-arrow-group {
+  cursor: pointer;
+  display: inline-block;
+  transition: transform 0.5s ease;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.draggable {
+  /* opacity: 0.2; */
+  padding: 2px;
+  padding-left: 10px;
+  padding-right: 10px;
+  font-weight: bold;
+  color: black;
+  border-radius: 15px;
+  border: #333;
+  cursor: move;
+  border-style: groove;
+  --dot-bg: #f7f7f7;
+  --dot-color: rgba(0, 0, 0, 0.2);
+  --dot-size: 2px;
+  --dot-space: 4px;
+  background: linear-gradient(90deg, var(--dot-bg) calc(var(--dot-space) - var(--dot-size)), transparent 1%) center / var(--dot-space)
+      var(--dot-space),
+    linear-gradient(var(--dot-bg) calc(var(--dot-space) - var(--dot-size)), transparent 1%) center / var(--dot-space) var(--dot-space),
+    var(--dot-color);
+}
+
+span.grippy {
+  font-weight: bold;
+  content: "....";
+  width: 10px;
+  height: 20px;
+  display: inline-block;
+  overflow: hidden;
+  line-height: 5px;
+  padding: 3px 4px;
+  cursor: move;
+  vertical-align: middle;
+  margin-top: -0.5em;
+  margin-right: 0.3em;
+  font-size: 12px;
+  font-family: sans-serif;
+  letter-spacing: 2px;
+  color: #cccccc;
+  text-shadow: 1px 0 1px black;
+}
+span.grippy::after {
+  content: ".. .. .. ..";
+}
+
+.controls {
+  font-size: 12px;
+  color: #666;
+}
+
+.slider-group {
+  margin-bottom: 5px;
+  margin-top: 5px;
+}
+
+.label-value {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 2px;
+}
+
+input[type="range"] {
+  width: 100%;
+}
+
+input[type="checkbox"] {
+  margin-right: 5px;
+}
+
+.control-button {
+  background: rgba(0, 100, 255, 0.3);
+  color: #fff;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 5px;
+}
+
+.control-button:hover {
+  background: rgba(0, 100, 255, 0.5);
+}
+
+p {
+  margin-block-start: 0;
+  margin-block-end: 0;
+}

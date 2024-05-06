@@ -2,35 +2,11 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>p5MediaPipeHands Hands Landmarker</title>
+    <title>Do not touch my leaves, man!</title>
+    <link rel="stylesheet" href="styles.css" />
   </head>
 
   <body>
-    <style>
-      #webcam {
-        transform: scaleX(-1); /* Flip the video horizontally */
-      }
-      .control-panel {
-        width: 250px;
-        height: auto;
-        position: fixed;
-        top: 10px;
-        left: 10px;
-        background-color: rgba(255, 255, 255, 0.8);
-        padding: 10px;
-        border-radius: 8px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        z-index: 1000;
-      }
-      .control-panel-header {
-        padding: 4px 10px;
-        background-color: #f1f1f1;
-        color: #333;
-        cursor: move; /* Indicate that it's movable */
-        border-top-left-radius: 8px;
-        border-top-right-radius: 8px;
-      }
-    </style>
     <script>
       function makeDraggable(dragHandle, draggableElement) {
         var pos1 = 0,
@@ -85,44 +61,83 @@
         makeDraggable(header, controlPanel);
       };
     </script>
-
     <div id="controlPanel" class="control-panel">
-      <div id="controlPanelHeader" class="control-panel-header">Drag here</div>
+      <div id="controlPanelHeader" class="control-panel-header draggable">
+        <div class="label-value">
+          <label class="toggle-arrow-group" onclick="toggleControls()">
+            <span id="toggleArrow" class="toggle-arrow">&#9660; Collapse</span>
+          </label>
+          <span class="grippy"></span>
+        </div>
+      </div>
       <div class="controls">
-        Leaf Count: <input type="range" id="leafCountSlider" min="0" max="100" value="100" /> <span id="leafCountValue">100</span><br />
-        Size: <input type="range" id="sizeSlider" min="20" max="200" value="30" /> <span id="sizeValue">30</span><br />
-        Speed: <input type="range" id="speedSlider" min="0" max="8" value="0" /> <span id="speedValue">0</span><br />
-        <input type="range" id="influenceRadiusSlider" min="3" max="300" value="60" />
-        <label for="influenceRadiusSlider">Influence Radius</label><br />
-        <input type="checkbox" id="drawInfluenceCheckbox" checked />
-        <label for="drawInfluenceCheckbox">Draw Influence Radius</label><br />
-        <button id="gridButton">Create Grid</button>
+        <div class="slider-group">
+          <div class="label-value">
+            <label for="leaf-count-slider">Leaf Count:</label>
+            <span id="leaf-count-value">100</span>
+          </div>
+          <input type="range" id="leaf-count-slider" min="0" max="300" value="100" />
+        </div>
+
+        <div class="slider-group">
+          <div class="label-value">
+            <label for="size-slider">Size:</label>
+            <span id="size-value">30</span>
+          </div>
+          <input type="range" id="size-slider" min="20" max="200" value="30" />
+        </div>
+
+        <div class="slider-group">
+          <div class="label-value">
+            <label for="speed-slider">Speed:</label>
+            <span id="speed-value">0</span>
+          </div>
+          <input type="range" id="speed-slider" min="0" max="8" value="0" />
+        </div>
+
+        <div class="slider-group" hidden>
+          <div class="label-value">
+            <label for="influence-radius-slider">Radius:</label>
+            <span id="influence-radius-value">0</span>
+          </div>
+          <input type="range" id="influence-radius-slider" min="30" max="300" value="100" />
+        </div>
+
+        <div class="checkbox-group" hidden>
+          <input type="checkbox" id="draw-influence-checkbox" checked />
+          <label for="draw-influence-checkbox">Draw Radius</label>
+        </div>
+
+        <button id="grid-button" class="control-button">Make a Grid</button>
+        <button id="webcam-button" class="control-button">Run webcam</button>
         <p id="message"></p>
-        <button id="webcamButton">ENABLE WEBCAM</button>
       </div>
     </div>
-
-    <!-- <div class="controls">
-      Leaf Count: <input type="range" id="leafCountSlider" min="0" max="100" value="100" /> <span id="leafCountValue">100</span><br />
-      Size: <input type="range" id="sizeSlider" min="20" max="200" value="30" /> <span id="sizeValue">30</span><br />
-      Speed: <input type="range" id="speedSlider" min="0" max="8" value="0" /> <span id="speedValue">0</span><br />
-      <input type="range" id="influenceRadiusSlider" min="3" max="300" value="60" />
-      <label for="influenceRadiusSlider">Influence Radius</label><br />
-      <input type="checkbox" id="drawInfluenceCheckbox" checked />
-      <label for="drawInfluenceCheckbox">Draw Influence Radius</label><br />
-      <button id="gridButton">Create Grid</button>
-    </div> -->
 
     <div style="position: relative">
       <video id="webcam" style="position: absolute; left: 0px; top: 0px; width: 100%; height: auto" autoplay playsinline></video>
       <div id="canvas" style="position: absolute; left: 0px; top: 0px"></div>
     </div>
 
-    <!-- include js libraries -->
-    <script src="./js/drawing_utils.js" crossorigin="anonymous"></script>
-    <script src="./js/hands.js" crossorigin="anonymous"></script>
-    <script src="./js/p5.js"></script>
+    <script src="./js/p5.min.js"></script>
     <script src="./js/sketch.js"></script>
     <script type="module" src="./js/script.js"></script>
+    <script>
+      function toggleControls() {
+        var controls = document.querySelector(".controls");
+        var arrow = document.getElementById("toggleArrow");
+
+        // Toggle visibility of controls
+        if (controls.style.display === "none") {
+          controls.style.display = "block";
+          controlPanelHeader.classList.remove("collapsed");
+          arrow.innerHTML = "&#9660; Collapse";
+        } else {
+          controls.style.display = "none";
+          controlPanelHeader.classList.add("collapsed");
+          arrow.innerHTML = "&#9654; Expand";
+        }
+      }
+    </script>
   </body>
 </html>

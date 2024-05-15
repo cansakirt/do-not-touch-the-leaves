@@ -1,8 +1,10 @@
+
 // 1. Global variables and settings
 let leaves = [];
 let mousePos;
 let hand_results;
 let gesture_results;
+
 let p5canvas;
 let landmarkPos;
 let categoryName;
@@ -27,6 +29,11 @@ class Leaf {
     this.speed = p5.Vector.random3D().mult(speed);
     this.rotationSpeed = p5.Vector.random3D().mult(0.05);
     this.rotation = p5.Vector.random3D().mult(TWO_PI);
+
+    // Pre-compute values
+    this.halfSize = this.size / 2;
+    this.quarterSize = this.size / 4;
+    this.sixthSize = this.size / 6;
   }
 
   update() {
@@ -35,36 +42,36 @@ class Leaf {
     this.z += this.speed.z;
     this.rotation.add(this.rotationSpeed);
 
-    // Bounce off the edges
-    if (this.x < 0 || this.x > width) this.speed.x *= -1;
-    if (this.y < 0 || this.y > height) this.speed.y *= -1;
+    // Check for edge collisions only near edges
+    if (this.x < this.halfSize || this.x > width - this.halfSize) this.speed.x *= -1;
+    if (this.y < this.halfSize || this.y > height - this.halfSize) this.speed.y *= -1;
     if (this.z < -50 || this.z > 50) this.speed.z *= -1;
   }
 
   display() {
     push();
     translate(this.x, this.y, this.z);
-    rotateX(this.rotation.x);
-    rotateY(this.rotation.y);
-    rotateZ(this.rotation.z);
-    fill(76, 245, 80);
-    stroke(50);
+    // rotateX(this.rotation.x);
+    // rotateY(this.rotation.y);
+    // rotateZ(this.rotation.z);
+    // fill(76, 245, 80);
+    // stroke(50);
 
-    // Drawing leaf shape with veins
+    rotate(this.rotation.z); // Combine rotations for efficiency
+
+    // Cache leaf shape
     beginShape();
-    // Leaf tip
-    vertex(0, -this.size / 2);
-    // Right side
-    bezierVertex(this.size / 4, -this.size / 3, this.size / 2, this.size / 4, 0, this.size / 2);
-    // Left side
-    bezierVertex(-this.size / 2, this.size / 4, -this.size / 4, -this.size / 3, 0, -this.size / 2);
+    vertex(0, -this.halfSize);
+    bezierVertex(this.quarterSize, -this.size / 3, this.halfSize, this.quarterSize, 0, this.halfSize);
+    bezierVertex(-this.halfSize, this.quarterSize, -this.quarterSize, -this.size / 3, 0, -this.halfSize);
     endShape();
 
     // Draw veins
-    stroke(120, 50, 50); // Darker stroke for veins
-    line(0, -this.size / 2, 0, this.size / 2); // Main vein
-    line(0, 0, this.size / 4, -this.size / 6); // Right vein
-    line(0, 0, -this.size / 4, -this.size / 6); // Left vein
+    stroke(120, 50, 50);
+    line(0, -this.halfSize, 0, this.halfSize); // Main vein
+    line(0, 0, this.quarterSize, -this.sixthSize); // Right vein
+    line(0, 0, -this.quarterSize, -this.sixthSize); // Left vein
+
     pop();
   }
 }
@@ -118,18 +125,26 @@ function initializeControls() {
 }
 
 // 3. Leaf creation
+let leafPool = [];
+
 function createLeaves() {
-  leaves = Array.from({ length: settings.leafCount }, () => new Leaf(settings.leafSize, settings.leafSpeed));
+  for (let i = 0; i < settings.leafCount; i++) {
+    if (leafPool.length > 0) {
+      leaves.push(leafPool.pop());
+    } else {
+      leaves.push(new Leaf(settings.leafSize, settings.leafSpeed));
+    }
+  }
 }
 
 // 4. Update functions for settings and leaves
 function updateLeafCount(value) {
   settings.leafCount = parseInt(value);
-  let difference = settings.leafCount - leaves.length;
+  const difference = settings.leafCount - leaves.length;
   if (difference > 0) {
     leaves.push(...Array.from({ length: difference }, () => new Leaf(settings.leafSize, settings.leafSpeed)));
   } else {
-    leaves.length = settings.leafCount;
+    leaves.splice(settings.leafCount);
   }
   select("#leaf-count-value").html(settings.leafCount);
 }
@@ -147,10 +162,20 @@ function updateLeafSpeed(value) {
 }
 
 function updateInfluenceRadius(value) {
-  console.log("settings.influenceRadius :>> ", settings.influenceRadius);
-  settings.influenceRadius = parseInt(value);
+    settings.influenceRadius = parseInt(value);
   select("#influence-radius-value").html(settings.influenceRadius);
 }
+
+
+function updateLeaves() {
+  const updatedValues = [];
+  leaves.forEach((leaf) => {
+    updatedValues.push(`#leaf-${leaf.id}-size`, leaf.size);
+    updatedValues.push(`#leaf-${leaf.id}-speed`, leaf.speed);
+  });
+  select(updatedValues).html((element, value) => value);
+}
+
 
 function updateDrawInfluence(value) {
   settings.drawInfluence = !!value;
